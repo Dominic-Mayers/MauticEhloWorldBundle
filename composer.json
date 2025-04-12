@@ -1,0 +1,17 @@
+{
+    "name": "mautic/plugin-helloworld",
+    "description": "Hello World Plugin",
+    "type": "mautic-plugin",
+    "keywords": [
+        "mautic",
+        "plugin",
+        "integration"
+    ],
+    "extra": {
+        "install-directory-name": "MauticHelloWorldBundle"
+    },
+    "minimum-stability": "dev",
+    "require": {
+        "mautic/core-lib": "^6.0"
+    }
+}
