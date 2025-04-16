@@ -224,6 +224,19 @@ class GmailSmtpIntegration extends AbstractIntegration
                 return $debugMessage;
             }
         }
+        
+        // We unset the newly obtained keys, because it can create issues, keeping only:
+        $newKeys['client_id']     = $keys['client_id'];
+        $newKeys['client_secret'] = $keys['client_secret'];
+        $apiKeys                  = $this->encryptApiKeys($newKeys);
+        
+        // Save (again) the data
+        $entity = $this->getIntegrationSettings();
+        $entity->setApiKeys($apiKeys); 
+        $this->em->persist($entity);
+        $this->em->flush();
+        $this->setIntegrationSettings($entity);        
+        
         // LOGGING
         $logMessage .= date('H:i:s').': New access and refresh tokens for '.$gmail_user.' installed.'."\n";
         file_put_contents($infoFile, $logMessage, FILE_APPEND);
