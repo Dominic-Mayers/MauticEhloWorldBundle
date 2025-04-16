@@ -226,12 +226,12 @@ class GmailSmtpIntegration extends AbstractIntegration
                 return $debugMessage;
             }
         }
-        
+
         // We unset the newly obtained keys, because it can create issues, keeping only:
         $newKeys['client_id']     = $keys['client_id'];
         $newKeys['client_secret'] = $keys['client_secret'];
         $apiKeys                  = $this->encryptApiKeys($newKeys);
-    
+
         // Save (again) the data
         $entity = $this->getIntegrationSettings();
         $entity->setApiKeys($apiKeys);
