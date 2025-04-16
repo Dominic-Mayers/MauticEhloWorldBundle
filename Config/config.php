@@ -1,4 +1,5 @@
 <?php
+
 //define("TMP", "/home/dominic/tmp/debug.log");
 return [
     'name'        => 'Email Marketing',

@@ -22,8 +22,8 @@ class RequestListener implements EventSubscriberInterface
     ) {
         // This statement could be moved in a more basic file of the plugin that that takes care of this stuff.
         // This needs to be adapted for a local instance.
-        $confFile = 'config/.env.tokens.local'; 
-        if (file_exists($confFile)) { 
+        $confFile = 'config/.env.tokens.local';
+        if (file_exists($confFile)) {
             (new Dotenv())->loadEnv($confFile, overrideExistingVars: true);
         } else {
             date_default_timezone_set('America/montreal');
@@ -88,7 +88,7 @@ class RequestListener implements EventSubscriberInterface
             $debugMessage .= 'Could not connect with GmailSmtp integration.'.PHP_EOL;
             file_put_contents($debugFile, $debugMessage, FILE_APPEND);
 
-            return;            
+            return;
         }
         if (!isset($keys['client_id'])) {
             // DEBUGGING
@@ -118,14 +118,14 @@ class RequestListener implements EventSubscriberInterface
         } else {
             $refresh_token = $_ENV['REFRESH_TOKEN'];
         }
-        
+
         if (isset($_ENV['REFRESH_EXPIRES_AT']) && time() > $_ENV['REFRESH_EXPIRES_AT']) {
             // DEBUGGING
             $debugMessage .= 'Since '.date('Y_m_d_H:i:s', $_ENV['REFRESH_EXPIRES_AT']).' the refresh token is expired.'.PHP_EOL;
             file_put_contents($debugFile, $debugMessage, FILE_APPEND);
 
             return;
-        } 
+        }
 
         // Curl request to get a new access token
         try {
@@ -134,7 +134,9 @@ class RequestListener implements EventSubscriberInterface
             curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
             curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'POST');
             curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/x-www-form-urlencoded']);
-            curl_setopt($ch, CURLOPT_POSTFIELDS,
+            curl_setopt(
+                $ch,
+                CURLOPT_POSTFIELDS,
                 "access_type=offline&refresh_token=$refresh_token&client_id=$client_id&client_secret=$client_secret&grant_type=refresh_token"
             );
             $resp      = curl_exec($ch);
@@ -184,8 +186,8 @@ class RequestListener implements EventSubscriberInterface
         } else {
             $confFile   = 'config/.env.tokens.local';
         }
-        if(!file_exists($confFile)) {
-            $debugMessage .= "The configuration file $confFile does not exist.".PHP_EOL; 
+        if (!file_exists($confFile)) {
+            $debugMessage .= "The configuration file $confFile does not exist.".PHP_EOL;
             file_put_contents($debugFile, $debugMessage, FILE_APPEND);
 
             return;
@@ -194,22 +196,22 @@ class RequestListener implements EventSubscriberInterface
         $newconfig  = "# This file is automatically rewritten each time the access token is renewed.".PHP_EOL;
         $newconfig .= 'ACCESS_TOKEN='.$_ENV['ACCESS_TOKEN'].PHP_EOL;
         $newconfig .= 'EXPIRES_AT='.$_ENV['EXPIRES_AT'].PHP_EOL.PHP_EOL;
-        $newconfig .= "# If the following values are modified, they will not be rewritten to their original value when the access token is renewed.".PHP_EOL; 
-        $newconfig .= "# This could prevent the use of the Gmail transport until the GMAIL user re-authorizes its use.".PHP_EOL; 
+        $newconfig .= "# If the following values are modified, they will not be rewritten to their original value when the access token is renewed.".PHP_EOL;
+        $newconfig .= "# This could prevent the use of the Gmail transport until the GMAIL user re-authorizes its use.".PHP_EOL;
         $newconfig .= 'GMAIL_USER='.$_ENV['GMAIL_USER'].PHP_EOL;
         $newconfig .= 'CLIENT_ID='.$client_id.PHP_EOL;
         $newconfig .= 'CLIENT_SECRET='.$client_secret.PHP_EOL;
         $newconfig .= 'REFRESH_TOKEN='.$_ENV['REFRESH_TOKEN'].PHP_EOL;
         if (isset($_ENV['REFRESH_EXPIRES_AT'])) {
-            $newconfig .= '# Expires '.date('l jS \o\f F Y H:i:s', $_ENV['REFRESH_EXPIRES_AT']).PHP_EOL;  
+            $newconfig .= '# Expires '.date('l jS \o\f F Y H:i:s', $_ENV['REFRESH_EXPIRES_AT']).PHP_EOL;
             $newconfig .= 'REFRESH_EXPIRES_AT='.$_ENV['REFRESH_EXPIRES_AT'].PHP_EOL;
         }
 
 
-        // This does not work as a way to define the parameter $mailer_dsn in local.php. 
+        // This does not work as a way to define the parameter $mailer_dsn in local.php.
         //$mailer_dsn = 'smtp://'.urlencode($_ENV['GMAIL_USER']).':'.$_ENV['ACCESS_TOKEN'].'@smtp.gmail.com:465';
         //$newconfig .= 'MAILER_DSN='.$mailer_dsn.PHP_EOL;
-        // So we use this workaround. 
+        // So we use this workaround.
         try {
             file_put_contents($confFile, $newconfig);
         } catch (\Exception $e) {
@@ -232,11 +234,11 @@ class RequestListener implements EventSubscriberInterface
         $content .= '$parameters[\'mailer_from_email\'] = '."'{$_ENV['GMAIL_USER']}';".PHP_EOL;
         try {
             file_put_contents($includeFile, $content);
-        } catch (\Exception $e ) {
+        } catch (\Exception $e) {
             // DEBUGGING
             $debugMessage .= $e->getMessage().PHP_EOL;
-            file_put_contents($debugFile, $debugMessage, FILE_APPEND);                    
-            return; 
+            file_put_contents($debugFile, $debugMessage, FILE_APPEND);
+            return;
         }
 
         if (isset($_SERVER['MAUTIC_NAME'])) {
@@ -253,8 +255,8 @@ class RequestListener implements EventSubscriberInterface
             } catch (\Exception $e) {
                 // DEBUGGING
                 $debugMessage .= $e->getMessage().PHP_EOL;
-                file_put_contents($debugFile, $debugMessage, FILE_APPEND);        
-                return; 
+                file_put_contents($debugFile, $debugMessage, FILE_APPEND);
+                return;
             }
         }
         // LOGGING
