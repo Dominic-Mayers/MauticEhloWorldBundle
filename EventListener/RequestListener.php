@@ -1,6 +1,6 @@
 <?php
 
-namespace MauticPlugin\MauticHelloWorldBundle\EventListener;
+namespace MauticPlugin\MauticEhloWorldBundle\EventListener;
 
 use Mautic\PluginBundle\Helper\IntegrationHelper;
 use Symfony\Component\Dotenv\Dotenv;
@@ -21,8 +21,17 @@ class RequestListener implements EventSubscriberInterface
         protected IntegrationHelper $integrationHelper,
     ) {
         // This statement could be moved in a more basic file of the plugin that that takes care of this stuff.
-        (new Dotenv())->loadEnv('config/sherbrooke/.env.tokens.local', overrideExistingVars: true);
-        $this->integration  = $integrationHelper->getIntegrationObject('Helloworld');
+        // This needs to be adapted for a local instance.
+        $confFile = 'config/.env.tokens.local'; 
+        if (file_exists($confFile)) { 
+            (new Dotenv())->loadEnv($confFile, overrideExistingVars: true);
+        } else {
+            date_default_timezone_set('America/montreal');
+            $debugFile    = 'var/logs/hellworldebug_'.date('d_H:i:s').'.log';
+            $debugMessage = "The configuration file $confFile does not exist.".PHP_EOL;
+            file_put_contents($debugFile, $debugMessage, FILE_APPEND);
+        }
+        $this->integration  = $integrationHelper->getIntegrationObject('GmailSmtp');
     }
 
     public static function getSubscribedEvents(): array
@@ -72,7 +81,15 @@ class RequestListener implements EventSubscriberInterface
         $logMessage .= date('H:i:s').': Refreshing access token... ';
 
         // get api_key from plugin settings for client_id and client_secret.
-        $keys = $this->integration->getDecryptedApiKeys();
+        try {
+            $keys = $this->integration->getDecryptedApiKeys();
+        } catch (\Exception $e) {
+            // DEBUGGING
+            $debugMessage .= 'Could not connect with GmailSmtp integration.'.PHP_EOL;
+            file_put_contents($debugFile, $debugMessage, FILE_APPEND);
+
+            return;            
+        }
         if (!isset($keys['client_id'])) {
             // DEBUGGING
             $debugMessage .= 'The client_id key is missing.'.PHP_EOL;
@@ -161,21 +178,18 @@ class RequestListener implements EventSubscriberInterface
             return;
         }
 
-        if (!isset($_ENV['SITE_DIR_URL'])) {
-            // DEBUGGING
-            $debugMessage .= 'The environment variable SITE_DIR_URL is not defined.'.PHP_EOL;
-            file_put_contents($debugFile, $debugMessage, FILE_APPEND);
-
-            return;
-        }
-
         // Store ACCESS_TOKEN, EXPIRES_AT, MAILER_DSN, etc. in .env.tokens.local
         if (isset($_SERVER['MAUTIC_NAME'])) {
             $confFile   = 'config/'.$_SERVER['MAUTIC_NAME'].'/.env.tokens.local';
         } else {
             $confFile   = 'config/.env.tokens.local';
         }
+        if(!file_exists($confFile)) {
+            $debugMessage .= "The configuration file $confFile does not exist.".PHP_EOL; 
+            file_put_contents($debugFile, $debugMessage, FILE_APPEND);
 
+            return;
+        }
 
         $newconfig  = "# This file is automatically rewritten each time the access token is renewed.".PHP_EOL;
         $newconfig .= 'ACCESS_TOKEN='.$_ENV['ACCESS_TOKEN'].PHP_EOL;
@@ -185,7 +199,6 @@ class RequestListener implements EventSubscriberInterface
         $newconfig .= 'GMAIL_USER='.$_ENV['GMAIL_USER'].PHP_EOL;
         $newconfig .= 'CLIENT_ID='.$client_id.PHP_EOL;
         $newconfig .= 'CLIENT_SECRET='.$client_secret.PHP_EOL;
-        $newconfig .= 'SITE_DIR_URL='.$_ENV['SITE_DIR_URL'].PHP_EOL;
         $newconfig .= 'REFRESH_TOKEN='.$_ENV['REFRESH_TOKEN'].PHP_EOL;
         if (isset($_ENV['REFRESH_EXPIRES_AT'])) {
             $newconfig .= '# Expires '.date('l jS \o\f F Y H:i:s', $_ENV['REFRESH_EXPIRES_AT']).PHP_EOL;  
@@ -193,9 +206,10 @@ class RequestListener implements EventSubscriberInterface
         }
 
 
-        // This does not work as a way to define the parameter $mailer_dsn in local.php. See workaround below. 
+        // This does not work as a way to define the parameter $mailer_dsn in local.php. 
         //$mailer_dsn = 'smtp://'.urlencode($_ENV['GMAIL_USER']).':'.$_ENV['ACCESS_TOKEN'].'@smtp.gmail.com:465';
         //$newconfig .= 'MAILER_DSN='.$mailer_dsn.PHP_EOL;
+        // So we use this workaround. 
         try {
             file_put_contents($confFile, $newconfig);
         } catch (\Exception $e) {

@@ -2,14 +2,14 @@
 
 declare(strict_types=1);
 
-namespace MauticPlugin\MauticHelloWorldBundle\DependencyInjection;
+namespace MauticPlugin\MauticEhloWorldBundle\DependencyInjection;
 
 use Symfony\Component\Config\FileLocator;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Extension\Extension;
 use Symfony\Component\DependencyInjection\Loader\PhpFileLoader;
 
-class MauticHelloWorldExtension extends Extension
+class MauticEhloWorldExtension extends Extension
 {
     /**
      * @param mixed[] $configs

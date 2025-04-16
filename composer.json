@@ -1,6 +1,6 @@
 {
-    "name": "mautic/plugin-helloworld",
-    "description": "Hello World Plugin",
+    "name": "mautic/plugin-emailmarketing",
+    "description": "Email Marketing Plugin",
     "type": "mautic-plugin",
     "keywords": [
         "mautic",
@@ -8,7 +8,7 @@
         "integration"
     ],
     "extra": {
-        "install-directory-name": "MauticHelloWorldBundle"
+        "install-directory-name": "MauticEmailMarketingBundle"
     },
     "minimum-stability": "dev",
     "require": {
