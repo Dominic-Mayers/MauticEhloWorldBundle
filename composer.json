@@ -1,6 +1,6 @@
 {
-    "name": "mautic/plugin-emailmarketing",
-    "description": "Email Marketing Plugin",
+    "name": "mautic/plugin-ehloworld",
+    "description": "Ehlo World Plugin",
     "type": "mautic-plugin",
     "keywords": [
         "mautic",
@@ -8,10 +8,11 @@
         "integration"
     ],
     "extra": {
-        "install-directory-name": "MauticEmailMarketingBundle"
+        "install-directory-name": "MauticEhloWorldBundle"
     },
     "minimum-stability": "dev",
     "require": {
-        "mautic/core-lib": "^6.0"
+        "php": ">=8.1 <8.4",  
+        "mautic/core-lib": ">=^6.0"
     }
 }
