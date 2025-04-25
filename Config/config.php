@@ -2,8 +2,8 @@
 
 //define("TMP", "/home/dominic/tmp/debug.log");
 return [
-    'name'        => 'Email Marketing',
-    'description' => 'Enables integration with Mautic supported email marketing services.',
+    'name'        => 'Ehlo World',
+    'description' => 'Enables integration with Mautic Ehlo World services.',
     'version'     => '1.0',
     'author'      => 'Mautic',
 
