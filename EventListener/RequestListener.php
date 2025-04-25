@@ -16,22 +16,54 @@ use Symfony\Component\HttpKernel\Event\RequestEvent;
 class RequestListener implements EventSubscriberInterface
 {
     protected $integration;
+    private array  $keys           = [];
+	private string $confDir        = "";
+	private string $pluginConfDir  = "";
+	private string $confFile       = "";
+	private string $pluginConfFile = "";
 
     public function __construct(
         protected IntegrationHelper $integrationHelper,
     ) {
-        // This statement could be moved in a more basic file of the plugin that that takes care of this stuff.
-        // This needs to be adapted for a local instance.
-        $confFile = 'config/.env.tokens.local';
-        if (file_exists($confFile)) {
-            (new Dotenv())->loadEnv($confFile, overrideExistingVars: true);
-        } else {
-            date_default_timezone_set('America/montreal');
-            $debugFile    = 'var/logs/hellworldebug_'.date('d_H:i:s').'.log';
-            $debugMessage = "The configuration file $confFile does not exist.".PHP_EOL;
-            file_put_contents($debugFile, $debugMessage, FILE_APPEND);
-        }
+        // DEBUGGING
+        date_default_timezone_set('America/montreal');
+        $debugFile    = 'var/logs/hellworldebug_'.date('d_H:i:s').'.log';
+
         $this->integration  = $integrationHelper->getIntegrationObject('GmailSmtp');
+
+        // Do not even create the listener if no integration is available or 
+        // there is no client_id or no client_secret.
+        if ( empty( $this->integration ) ) {
+            $debugMessage = "There is no integration of Ehlo World.".PHP_EOL;
+            file_put_contents($debugFile, $debugMessage, FILE_APPEND);
+            return;
+        }
+        $this->keys = $this->integration->getDecryptedApiKeys();
+        if ( !isset($this->keys['client_id']) || !isset($this->keys['client_secret'])  ) {
+            $debugMessage = "The client_id or the client_secret keys is not set.".PHP_EOL;
+            file_put_contents($debugFile, $debugMessage, FILE_APPEND);
+            return;
+        }
+		
+        if (isset($_SERVER['MAUTIC_NAME'])) {
+            $this->confDir       = 'config/'.$_SERVER['MAUTIC_NAME'];
+            $this->pluginConfDir = 'plugins/MauticEhloWorldBundle/config/'.$_SERVER['MAUTIC_NAME'];
+        } else {
+            $this->confDir       = 'config';
+            $this->pluginConfDir = 'plugins/MauticEhloWorldBundle/config';
+        }
+        $this->confFile          = $this->confDir.'/local.php';
+        $this->pluginConfFile    = $this->pluginConfDir.'/.env.tokens.local';
+        $this->pluginIncludeFile = $this->pluginConfDir.'/new_mailer_dsn.php';
+        
+        // The loadEnv statement could be moved in a more basic file of the plugin that that takes care of this stuff.
+        if (file_exists($this->pluginConfFile)) {
+            (new Dotenv())->loadEnv($this->pluginConfFile, overrideExistingVars: true);
+        } else {
+            $debugMessage = "The configuration file {$this->pluginConfFile} does not exist.".PHP_EOL;
+            file_put_contents($debugFile, $debugMessage, FILE_APPEND);
+            return;
+        }
     }
 
     public static function getSubscribedEvents(): array
@@ -82,7 +114,7 @@ class RequestListener implements EventSubscriberInterface
 
         // get api_key from plugin settings for client_id and client_secret.
         try {
-            $keys = $this->integration->getDecryptedApiKeys();
+            $keys = $this->integration->getDecryptedApiKeys(); 
         } catch (\Exception $e) {
             // DEBUGGING
             $debugMessage .= 'Could not connect with GmailSmtp integration.'.PHP_EOL;
@@ -90,24 +122,9 @@ class RequestListener implements EventSubscriberInterface
 
             return;
         }
-        if (!isset($keys['client_id'])) {
-            // DEBUGGING
-            $debugMessage .= 'The client_id key is missing.'.PHP_EOL;
-            file_put_contents($debugFile, $debugMessage, FILE_APPEND);
-
-            return;
-        } else {
-            $client_id = $keys['client_id'];
-        }
-        if (!isset($keys['client_secret'])) {
-            // DEBUGGING
-            $debugMessage .= 'The client_secret key is missing.'.PHP_EOL;
-            file_put_contents($debugFile, $debugMessage, FILE_APPEND);
-
-            return;
-        } else {
-            $client_secret = $keys['client_secret'];
-        }
+		
+        $client_id = $this->keys['client_id'];
+        $client_secret = $this->keys['client_secret'];
 
         if (!isset($_ENV['REFRESH_TOKEN'])) {
             // DEBUGGING
@@ -181,15 +198,9 @@ class RequestListener implements EventSubscriberInterface
         }
 
         // Store ACCESS_TOKEN, EXPIRES_AT, MAILER_DSN, etc. in .env.tokens.local
-        if (isset($_SERVER['MAUTIC_NAME'])) {
-            $confFile   = 'config/'.$_SERVER['MAUTIC_NAME'].'/.env.tokens.local';
-        } else {
-            $confFile   = 'config/.env.tokens.local';
-        }
         if (!file_exists($confFile)) {
             $debugMessage .= "The configuration file $confFile does not exist.".PHP_EOL;
             file_put_contents($debugFile, $debugMessage, FILE_APPEND);
-
             return;
         }
 
@@ -211,9 +222,10 @@ class RequestListener implements EventSubscriberInterface
         // This does not work as a way to define the parameter $mailer_dsn in local.php.
         //$mailer_dsn = 'smtp://'.urlencode($_ENV['GMAIL_USER']).':'.$_ENV['ACCESS_TOKEN'].'@smtp.gmail.com:465';
         //$newconfig .= 'MAILER_DSN='.$mailer_dsn.PHP_EOL;
-        // So we use this workaround.
+        // See below, after the try statement, for a workaround.
+        
         try {
-            file_put_contents($confFile, $newconfig);
+            file_put_contents($this->pluginConfFile, $newconfig);
         } catch (\Exception $e) {
             // DEBUGGING
             $debugMessage .= $e->getMessage().PHP_EOL;
@@ -221,37 +233,28 @@ class RequestListener implements EventSubscriberInterface
 
             return;
         }
+
         // This is a workaround for not being able to use %env(ENV_VARIABLE)% in mailer_dsn, which is likely a bug.
         // Uppdate a mailer_dsn include file and make sure it is included in local.php.
-        if (isset($_SERVER['MAUTIC_NAME'])) {
-            $includeFile = 'config/'.$_SERVER['MAUTIC_NAME'].'/new_mailer_dsn.php';
-        } else {
-            $includeFile = 'config/new_mailer_dsn.php';
-        }
         $mailer_dsn  = 'smtp://'.urlencode($_ENV['GMAIL_USER']).':'.$_ENV['ACCESS_TOKEN'].'@smtp.gmail.com:465';
         $content     = "<?php".PHP_EOL;
         $content .= '$parameters[\'mailer_dsn\'] = '."'$mailer_dsn';".PHP_EOL;
         $content .= '$parameters[\'mailer_from_email\'] = '."'{$_ENV['GMAIL_USER']}';".PHP_EOL;
         try {
-            file_put_contents($includeFile, $content);
+            file_put_contents($this->pluginIncludeFile, $content);
         } catch (\Exception $e) {
             // DEBUGGING
             $debugMessage .= $e->getMessage().PHP_EOL;
             file_put_contents($debugFile, $debugMessage, FILE_APPEND);
             return;
         }
-
-        if (isset($_SERVER['MAUTIC_NAME'])) {
-            $configFile       = 'config/'.$_SERVER['MAUTIC_NAME'].'/local.php';
-        } else {
-            $configFile       = 'config/local.php';
-        }
-        $lastLine         = shell_exec("tail -n 1 $configFile");
+        $toExec           = "tail -n 1 {$this->confFile}"; 
+        $lastLine         = shell_exec($toExec);
         $lastLine         = trim($lastLine);
-        $expectedLastLine = "include('$includeFile');";
+        $expectedLastLine = "include('{$this->pluginIncludeFile}');";
         if ($lastLine !== $expectedLastLine) {
             try {
-                file_put_contents($configFile, "\n$expectedLastLine", FILE_APPEND);
+                file_put_contents($this->confFile, "\n$expectedLastLine", FILE_APPEND);
             } catch (\Exception $e) {
                 // DEBUGGING
                 $debugMessage .= $e->getMessage().PHP_EOL;
