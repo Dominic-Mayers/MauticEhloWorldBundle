@@ -47,10 +47,10 @@ class RequestListener implements EventSubscriberInterface
 		
         if (isset($_SERVER['MAUTIC_NAME'])) {
             $this->confDir       = 'config/'.$_SERVER['MAUTIC_NAME'];
-            $this->pluginConfDir = 'plugins/MauticEhloWorldBundle/config/'.$_SERVER['MAUTIC_NAME'];
+            $this->pluginConfDir = 'plugins/MauticEhloWorldBundle/Config/'.$_SERVER['MAUTIC_NAME'];
         } else {
             $this->confDir       = 'config';
-            $this->pluginConfDir = 'plugins/MauticEhloWorldBundle/config';
+            $this->pluginConfDir = 'plugins/MauticEhloWorldBundle/Config';
         }
         $this->confFile          = $this->confDir.'/local.php';
         $this->pluginConfFile    = $this->pluginConfDir.'/.env.tokens.local';
@@ -198,8 +198,8 @@ class RequestListener implements EventSubscriberInterface
         }
 
         // Store ACCESS_TOKEN, EXPIRES_AT, MAILER_DSN, etc. in .env.tokens.local
-        if (!file_exists($confFile)) {
-            $debugMessage .= "The configuration file $confFile does not exist.".PHP_EOL;
+        if (!file_exists($this->pluginConfFile)) {
+            $debugMessage .= "The configuration file {$this->pluginConfFile} does not exist.".PHP_EOL;
             file_put_contents($debugFile, $debugMessage, FILE_APPEND);
             return;
         }

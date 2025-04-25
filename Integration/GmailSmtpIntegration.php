@@ -69,6 +69,17 @@ class GmailSmtpIntegration extends AbstractIntegration
      */
     public function authCallback($settings = [], $parameters = [])
     {
+        if (isset($_SERVER['MAUTIC_NAME'])) {
+            $confDir       = 'config/'.$_SERVER['MAUTIC_NAME'];
+            $pluginConfDir = 'plugins/MauticEhloWorldBundle/Config/'.$_SERVER['MAUTIC_NAME'];
+        } else {
+            $confDir       = 'config';
+            $pluginConfDir = 'plugins/MauticEhloWorldBundle/Config';
+        }
+        $confFile          = $confDir.'/local.php';
+        $pluginConfFile    = $pluginConfDir.'/.env.tokens.local';
+        $pluginIncludeFile = $pluginConfDir.'/new_mailer_dsn.php';
+
         $error = parent::authCallback($settings, $parameters);
         if ($error) {
             return $error;
@@ -150,11 +161,9 @@ class GmailSmtpIntegration extends AbstractIntegration
         $refresh_token_expires_at = isset($keys['refresh_token_expires_in']) ? $keys['refresh_token_expires_in'] + time() : false;
 
         // Store ACCESS_TOKEN, EXPIRES_AT, MAILER_DSN, etc. in .env.tokens.local
-        $instance_name_dir = isset($_SERVER['MAUTIC_NAME']) ? $_SERVER['MAUTIC_NAME'] . '/' : '';
-        $confFile          = 'config/'.$instance_name_dir.'.env.tokens.local';
 
-        if (!file_exists($confFile) && !touch($confFile)) {
-            $debugMessage .= "The configuration file $confFile did not exist and could not be created.".PHP_EOL;
+        if (!file_exists($pluginConfFile) && !touch($pluginConfFile)) {
+            $debugMessage .= "The configuration file {$pluginConfFile} did not exist and could not be created.".PHP_EOL;
             file_put_contents($debugFile, $debugMessage, FILE_APPEND);
             return $debugMessage;
         }
@@ -173,8 +182,14 @@ class GmailSmtpIntegration extends AbstractIntegration
             $newconfig .= 'REFRESH_EXPIRES_AT='.$refresh_token_expires_at.PHP_EOL;
         }
 
+        // This does not work as a way to define the parameter $mailer_dsn in local.php.
+        // It is not possible to use %env(ENV_VARIABLE)% in mailer_dsn, which is likely a bug.
+        //$mailer_dsn = 'smtp://'.urlencode($_ENV['GMAIL_USER']).':'.$_ENV['ACCESS_TOKEN'].'@smtp.gmail.com:465';
+        //$newconfig .= 'MAILER_DSN='.$mailer_dsn.PHP_EOL;
+        // After the try block, we will use a work around.
+
         try {
-            file_put_contents($confFile, $newconfig);
+            file_put_contents($pluginConfFile, $newconfig);
         } catch (\Exception $e) {
             // DEBUGGING
             $debugMessage .= $e->getMessage()."\n";
@@ -183,24 +198,13 @@ class GmailSmtpIntegration extends AbstractIntegration
             return $debugMessage;
         }
 
-        // This does not work as a way to define the parameter $mailer_dsn in local.php.
-        // It is not possible to use %env(ENV_VARIABLE)% in mailer_dsn, which is likely a bug.
-        //$mailer_dsn = 'smtp://'.urlencode($_ENV['GMAIL_USER']).':'.$_ENV['ACCESS_TOKEN'].'@smtp.gmail.com:465';
-        //$newconfig .= 'MAILER_DSN='.$mailer_dsn.PHP_EOL;
-
-        // This is a workaround:
-        // Uppdate a mailer_dsn include file and make sure it is included in local.php.
-        if (isset($_SERVER['MAUTIC_NAME'])) {
-            $includeFile = 'config/'.$_SERVER['MAUTIC_NAME'].'/new_mailer_dsn.php';
-        } else {
-            $includeFile = 'config/new_mailer_dsn.php';
-        }
+        // This is a work around for the issue mentioned above.
         $mailer_dsn  = 'smtp://'.urlencode($gmail_user).':'.$access_token.'@smtp.gmail.com:465';
         $content     = "<?php\n";
         $content .= '$parameters[\'mailer_dsn\'] = '."'$mailer_dsn';\n";
         $content .= '$parameters[\'mailer_from_email\'] = '."'$gmail_user';\n";
         try {
-            file_put_contents($includeFile, $content);
+            file_put_contents($pluginIncludeFile, $content);
         } catch (\Exception $e) {
             // DEBUGGING
             $debugMessage .= $e->getMessage()."\n";
@@ -208,17 +212,12 @@ class GmailSmtpIntegration extends AbstractIntegration
             return $debugMessage;
         }
 
-        if (isset($_SERVER['MAUTIC_NAME'])) {
-            $configFile       = 'config/'.$_SERVER['MAUTIC_NAME'].'/local.php';
-        } else {
-            $configFile       = 'config/local.php';
-        }
-        $lastLine         = shell_exec("tail -n 1 $configFile");
+        $lastLine         = shell_exec("tail -n 1 $confFile");
         $lastLine         = trim($lastLine);
-        $expectedLastLine = "include('$includeFile');";
+        $expectedLastLine = "include('$pluginIncludeFile');";
         if ($lastLine !== $expectedLastLine) {
             try {
-                file_put_contents($configFile, "\n$expectedLastLine", FILE_APPEND);
+                file_put_contents($confFile, "\n$expectedLastLine", FILE_APPEND);
             } catch (\Exception $e) {
                 // DEBUGGINGdate('Y_m_d_H:i:s')
                 $debugMessage .= $e->getMessage()."\n";
