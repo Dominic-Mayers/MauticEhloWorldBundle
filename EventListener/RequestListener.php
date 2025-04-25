@@ -28,6 +28,9 @@ class RequestListener implements EventSubscriberInterface
         // DEBUGGING
         date_default_timezone_set('America/montreal');
         $debugFile    = 'var/logs/hellworldebug_'.date('d_H:i').'.log';
+
+        // Do not even create the listener if no integration is available or 
+        // there is no client_id or no client_secret.
         try {
             $this->integration  = $integrationHelper->getIntegrationObject('GmailSmtp');
         } catch (\Exception $e) {
@@ -37,9 +40,6 @@ class RequestListener implements EventSubscriberInterface
 
             return;
         }
-
-        // Do not even create the listener if no integration is available or 
-        // there is no client_id or no client_secret.
         if ( empty( $this->integration ) ) {
             $debugMessage = date('H:i:s').': '."Warning: The Gmail Smtp integration is empty.".PHP_EOL;
             file_put_contents($debugFile, $debugMessage, FILE_APPEND);
@@ -52,6 +52,7 @@ class RequestListener implements EventSubscriberInterface
             return;
         }
 		
+        // Set the config files
         if (isset($_SERVER['MAUTIC_NAME'])) {
             $this->confDir       = 'config/'.$_SERVER['MAUTIC_NAME'];
             $this->pluginConfDir = 'plugins/MauticEhloWorldBundle/Config/'.$_SERVER['MAUTIC_NAME'];
