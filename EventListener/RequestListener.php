@@ -26,8 +26,9 @@ class RequestListener implements EventSubscriberInterface
         protected IntegrationHelper $integrationHelper,
     ) {
         // DEBUGGING
-        date_default_timezone_set('America/montreal');
+        date_default_timezone_set('America/Montreal');
         $debugFile    = 'var/logs/hellworldebug_'.date('d_H:i').'.log';
+        $debugMessage = '';
 
         // Do not even create the listener if no integration is available or 
         // there is no client_id or no client_secret.
