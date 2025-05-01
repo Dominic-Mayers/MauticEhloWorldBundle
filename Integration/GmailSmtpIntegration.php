@@ -88,7 +88,7 @@ class GmailSmtpIntegration extends AbstractIntegration
         $idKeys = json_decode(base64_decode(str_replace('_', '/', str_replace('-', '+', explode('.', $keys['id_token'])[1]))), true);
 
         // LOGGING and DEBUGGING
-        date_default_timezone_set('America/montreal');
+        date_default_timezone_set('America/Montreal');
         $debugFile    = 'var/logs/gmail_smtp_debug_'.date('d_H:i:s').'.log';
         $infoFile     = 'var/logs/gmail_smtp_'.date('d').'.log';
         $logMessage   = $debugMessage = '';

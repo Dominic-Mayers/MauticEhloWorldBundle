@@ -86,7 +86,7 @@ class RequestListener implements EventSubscriberInterface
     {
         // LOGGING and DEBUGGING
 
-        date_default_timezone_set('America/montreal');
+        date_default_timezone_set('America/Montreal');
         $debugFile    = 'var/logs/hellworldebug_'.date('d_H:i').'.log';
         $infoFile     = 'var/logs/helloworld_'.date('d').'.log';
         $logMessage   = $debugMessage = '';
