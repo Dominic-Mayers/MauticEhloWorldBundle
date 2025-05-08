@@ -37,7 +37,7 @@ class GmailSmtpIntegration extends AbstractIntegration
      */
     public function getAuthLoginUrl()
     {
-        // file_put_contents(TMP, date('Y_M_D_H:i:s').": The auth url is ".parent::getAuthLoginUrl() . "&access_type=offline&prompt=consent".PHP_EOL);
+        // file_put_contents(TMP, date('Y_M_D_H:i:s (T)').": The auth url is ".parent::getAuthLoginUrl() . "&access_type=offline&prompt=consent".PHP_EOL);
         return parent::getAuthLoginUrl() . "&access_type=offline&prompt=consent";
     }
 
@@ -88,8 +88,7 @@ class GmailSmtpIntegration extends AbstractIntegration
         $idKeys = json_decode(base64_decode(str_replace('_', '/', str_replace('-', '+', explode('.', $keys['id_token'])[1]))), true);
 
         // LOGGING and DEBUGGING
-        date_default_timezone_set('America/Montreal');
-        $debugFile    = 'var/logs/gmail_smtp_debug_'.date('d_H:i:s').'.log';
+        $debugFile    = 'var/logs/gmail_smtp_debug_'.date('d_H:i:s (T)').'.log';
         $infoFile     = 'var/logs/gmail_smtp_'.date('d').'.log';
         $logMessage   = $debugMessage = '';
 
@@ -178,7 +177,7 @@ class GmailSmtpIntegration extends AbstractIntegration
         $newconfig .= 'CLIENT_SECRET='.$client_secret.PHP_EOL;
         $newconfig .= 'REFRESH_TOKEN='.$refresh_token.PHP_EOL;
         if ($refresh_token_expires_at) {
-            $newconfig .= '# Expires '.date('l jS \o\f F Y H:i:s', $refresh_token_expires_at).PHP_EOL;
+            $newconfig .= '# Expires '.date('l jS \o\f F Y H:i:s (T)', $refresh_token_expires_at).PHP_EOL;
             $newconfig .= 'REFRESH_EXPIRES_AT='.$refresh_token_expires_at.PHP_EOL;
         }
 
@@ -219,7 +218,7 @@ class GmailSmtpIntegration extends AbstractIntegration
             try {
                 file_put_contents($confFile, "\n$expectedLastLine", FILE_APPEND);
             } catch (\Exception $e) {
-                // DEBUGGINGdate('Y_m_d_H:i:s')
+                // DEBUGGING
                 $debugMessage .= $e->getMessage()."\n";
                 file_put_contents($debugFile, $debugMessage, FILE_APPEND);
                 return $debugMessage;
@@ -239,7 +238,7 @@ class GmailSmtpIntegration extends AbstractIntegration
         $this->setIntegrationSettings($entity);
 
         // LOGGING
-        $logMessage .= date('H:i:s').': New access and refresh tokens for '.$gmail_user.' installed.'."\n";
+        $logMessage .= date('H:i:s (T)').': New access and refresh tokens for '.$gmail_user.' installed.'."\n";
         file_put_contents($infoFile, $logMessage, FILE_APPEND);
 
         return false;
