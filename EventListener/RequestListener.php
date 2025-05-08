@@ -68,7 +68,8 @@ class RequestListener implements EventSubscriberInterface
         if (file_exists($this->pluginConfFile)) {
             (new Dotenv())->loadEnv($this->pluginConfFile, overrideExistingVars: true);
         } else {
-            $debugMessage = date('Y_M_D_H:i:s (T)').': '."Warning: The configuration file {$this->pluginConfFile} does not exist.".PHP_EOL;
+            $debugMessage  = date('Y_M_D_H:i:s (T)').': '."Warning: The automatically generated configuration file {$this->pluginConfFile} does not exist.".PHP_EOL;
+            $debugMessage .= "                             Have you authorized the Ehlo World/Gmail Smtp plugin in settings-> Plugins?".PHP_EOL;
             file_put_contents($debugFile, $debugMessage, FILE_APPEND);
             return;
         }
