@@ -26,7 +26,7 @@ class RequestListener implements EventSubscriberInterface
         protected IntegrationHelper $integrationHelper,
     ) {
         // DEBUGGING
-        $debugFile    = 'var/logs/hellworldebug_'.date('d_H:i (T)').'.log';
+        $debugFile    = 'var/logs/ehloworldebug.log';
         $debugMessage = '';
 
         // Do not even create the listener if no integration is available or 
@@ -35,19 +35,19 @@ class RequestListener implements EventSubscriberInterface
             $this->integration  = $integrationHelper->getIntegrationObject('GmailSmtp');
         } catch (\Exception $e) {
             // DEBUGGING
-            $debugMessage .= date('H:i:s (T)').': '.'Warning: Failed to get GmailSmtp integration.'.PHP_EOL;
+            $debugMessage .= date('Y_M_D_H:i:s (T)').': '.'Warning: Failed to get GmailSmtp integration.'.PHP_EOL;
             file_put_contents($debugFile, $debugMessage, FILE_APPEND);
 
             return;
         }
         if ( empty( $this->integration ) ) {
-            $debugMessage = date('H:i:s (T)').': '."Warning: The Gmail Smtp integration is empty.".PHP_EOL;
+            $debugMessage = date('Y_M_D_H:i:s (T)').': '."Warning: The Gmail Smtp integration is empty.".PHP_EOL;
             file_put_contents($debugFile, $debugMessage, FILE_APPEND);
             return;
         }
         $this->keys = $this->integration->getDecryptedApiKeys();
         if ( !isset($this->keys['client_id']) || !isset($this->keys['client_secret'])  ) {
-            $debugMessage = date('H:i:s (T)').': '."Warning: The client_id or the client_secret keys is not set.".PHP_EOL;
+            $debugMessage = date('Y_M_D_H:i:s (T)').': '."Warning: The client_id or the client_secret keys is not set.".PHP_EOL;
             file_put_contents($debugFile, $debugMessage, FILE_APPEND);
             return;
         }
@@ -68,7 +68,7 @@ class RequestListener implements EventSubscriberInterface
         if (file_exists($this->pluginConfFile)) {
             (new Dotenv())->loadEnv($this->pluginConfFile, overrideExistingVars: true);
         } else {
-            $debugMessage = "date('H:i:s (T)').': '.Warning: The configuration file {$this->pluginConfFile} does not exist.".PHP_EOL;
+            $debugMessage = date('Y_M_D_H:i:s (T)').': '."Warning: The configuration file {$this->pluginConfFile} does not exist.".PHP_EOL;
             file_put_contents($debugFile, $debugMessage, FILE_APPEND);
             return;
         }
@@ -85,8 +85,8 @@ class RequestListener implements EventSubscriberInterface
     {
         // LOGGING and DEBUGGING
 
-        $debugFile    = 'var/logs/hellworldebug_'.date('d_H:i (T)').'.log';
-        $infoFile     = 'var/logs/helloworld_'.date('d').'.log';
+        $debugFile    = 'var/logs/ehloworldebug.log';
+        $infoFile     = 'var/logs/ehloworld_'.date('d').'.log';
         $logMessage   = $debugMessage = '';
 
         $request  = $event->getRequest(); // of class Symfony\Component\HttpFoundation\Request
@@ -96,7 +96,7 @@ class RequestListener implements EventSubscriberInterface
         $extension = \pathinfo($request->getPathInfo(), PATHINFO_EXTENSION);
         if ($extension) {
             // LOGGING
-            $logMessage .= date('H:i:s (T)').': '.$url." has a $extension extension.".PHP_EOL;
+            $logMessage .= date('Y_M_D_H:i:s (T)').': '.$url." has a $extension extension.".PHP_EOL;
             file_put_contents($infoFile, $logMessage, FILE_APPEND);
 
             return;
@@ -104,7 +104,7 @@ class RequestListener implements EventSubscriberInterface
 
         if (!isset($_ENV['EXPIRES_AT'])) {
             // DEBUGGING-
-            $debugMessage .= date('H:i:s (T)').': '.'Warning: EXPIRES_AT environment variable not defined.'.PHP_EOL;
+            $debugMessage .= date('Y_M_D_H:i:s (T)').': '.'Warning: EXPIRES_AT environment variable not defined.'.PHP_EOL;
             file_put_contents($debugFile, $debugMessage, FILE_APPEND);
 
             return;
@@ -112,19 +112,19 @@ class RequestListener implements EventSubscriberInterface
         $max_time = max(ini_get('max_execution_time'), get_cfg_var('max_execution_time'));
         if (time() + $max_time < $_ENV['EXPIRES_AT'] + 10) {
             // LOGGING
-            // $logMessage .= date('H:i:s (T)').': Access token is still valid'.PHP_EOL;
+            // $logMessage .= date('Y_M_D_H:i:s (T)').': Access token is still valid'.PHP_EOL;
             // file_put_contents($infoFile, $logMessage, FILE_APPEND);
             return;
         }
         // LOGGING
-        $logMessage .= date('H:i:s (T)').': Refreshing access token... ';
+        $logMessage .= date('Y_M_D_H:i:s (T)').': Refreshing access token... ';
 
         // get api_key from plugin settings for client_id and client_secret.
         try {
             $keys = $this->integration->getDecryptedApiKeys(); 
         } catch (\Exception $e) {
             // DEBUGGING
-            $debugMessage .= date('H:i:s (T)').': '.'Warning: Could not get keys from GmailSmtp integration.'.PHP_EOL;
+            $debugMessage .= date('Y_M_D_H:i:s (T)').': '.'Warning: Could not get keys from GmailSmtp integration.'.PHP_EOL;
             file_put_contents($debugFile, $debugMessage, FILE_APPEND);
 
             return;
@@ -135,7 +135,7 @@ class RequestListener implements EventSubscriberInterface
 
         if (!isset($_ENV['REFRESH_TOKEN'])) {
             // DEBUGGING
-            $debugMessage .= date('H:i:s (T)').': '.'Warning: The environment variable REFRESH_TOKEN is not defined.'.PHP_EOL;
+            $debugMessage .= date('Y_M_D_H:i:s (T)').': '.'Warning: The environment variable REFRESH_TOKEN is not defined.'.PHP_EOL;
             file_put_contents($debugFile, $debugMessage, FILE_APPEND);
 
             return;
@@ -145,7 +145,7 @@ class RequestListener implements EventSubscriberInterface
 
         if (isset($_ENV['REFRESH_EXPIRES_AT']) && time() > $_ENV['REFRESH_EXPIRES_AT']) {
             // DEBUGGING
-            $debugMessage .= date('H:i:s (T)').': '.'Warning: Since '.date('Y_m_d_H:i:s (T)', $_ENV['REFRESH_EXPIRES_AT']).' the refresh token is expired.'.PHP_EOL;
+            $debugMessage .= date('Y_M_D_H:i:s (T)').': '.'Warning: Since '.date('Y_m_d_H:i:s (T)', $_ENV['REFRESH_EXPIRES_AT']).' the refresh token is expired.'.PHP_EOL;
             file_put_contents($debugFile, $debugMessage, FILE_APPEND);
 
             return;
@@ -168,8 +168,8 @@ class RequestListener implements EventSubscriberInterface
             curl_close($ch);
         } catch (\Exception $e) {
             // DEBUGGING
-            $debugMessage .= date('H:i:s (T)').': '.'Warning: Could not curl to Google authorization server.'.PHP_EOL;
-            $debugMessage .= date('H:i:s (T)').': '.$e->getMessage().PHP_EOL;
+            $debugMessage .= date('Y_M_D_H:i:s (T)').': '.'Warning: Could not curl to Google authorization server.'.PHP_EOL;
+            $debugMessage .= date('Y_M_D_H:i:s (T)').': '.$e->getMessage().PHP_EOL;
             file_put_contents($debugFile, $debugMessage, FILE_APPEND);
 
             return;
@@ -178,9 +178,9 @@ class RequestListener implements EventSubscriberInterface
         $payload = json_decode($resp, true);
         if (!isset($payload['access_token'])) {
             // DEBUGGING
-            $debugMessage .= date('H:i:s (T)').': '.'Warning: No access_token in authorization response.'.PHP_EOL;
-            $debugMessage .= date('H:i:s (T)').': '.'Authorization response: '.$resp.PHP_EOL;
-            $debugMessage .= date('H:i:s (T)').': '.'Curl error: '.$curlError.PHP_EOL;
+            $debugMessage .= date('Y_M_D_H:i:s (T)').': '.'Warning: No access_token in authorization response.'.PHP_EOL;
+            $debugMessage .= date('Y_M_D_H:i:s (T)').': '.'Authorization response: '.$resp.PHP_EOL;
+            $debugMessage .= date('Y_M_D_H:i:s (T)').': '.'Curl error: '.$curlError.PHP_EOL;
             file_put_contents($debugFile, $debugMessage, FILE_APPEND);
 
             return;
@@ -189,7 +189,7 @@ class RequestListener implements EventSubscriberInterface
 
         if (!isset($payload['expires_in'])) {
             // DEBUGGING
-            $debugMessage .= date('H:i:s (T)').': '.'Warning: No expires-in in authorization response'.PHP_EOL;
+            $debugMessage .= date('Y_M_D_H:i:s (T)').': '.'Warning: No expires-in in authorization response'.PHP_EOL;
             file_put_contents($debugFile, $debugMessage, FILE_APPEND);
 
             return;
@@ -198,7 +198,7 @@ class RequestListener implements EventSubscriberInterface
 
         if (!isset($_ENV['GMAIL_USER'])) {
             // DEBUGGING
-            $debugMessage .= date('H:i:s (T)').': '.'Warning: The environment variable GMAIL_USER is not defined.'.PHP_EOL;
+            $debugMessage .= date('Y_M_D_H:i:s (T)').': '.'Warning: The environment variable GMAIL_USER is not defined.'.PHP_EOL;
             file_put_contents($debugFile, $debugMessage, FILE_APPEND);
 
             return;
@@ -206,7 +206,7 @@ class RequestListener implements EventSubscriberInterface
 
         // Store ACCESS_TOKEN, EXPIRES_AT, MAILER_DSN, etc. in .env.tokens.local
         if (!file_exists($this->pluginConfFile)) {
-            $debugMessage .= date('H:i:s (T)').': '."Warning: The configuration file {$this->pluginConfFile} does not exist.".PHP_EOL;
+            $debugMessage .= date('Y_M_D_H:i:s (T)').': '."Warning: The configuration file {$this->pluginConfFile} does not exist.".PHP_EOL;
             file_put_contents($debugFile, $debugMessage, FILE_APPEND);
             return;
         }
@@ -235,7 +235,7 @@ class RequestListener implements EventSubscriberInterface
             file_put_contents($this->pluginConfFile, $newconfig);
         } catch (\Exception $e) {
             // DEBUGGING
-            $debugMessage .= date('H:i:s (T)').': '.$e->getMessage().PHP_EOL;
+            $debugMessage .= date('Y_M_D_H:i:s (T)').': '.$e->getMessage().PHP_EOL;
             file_put_contents($debugFile, $debugMessage, FILE_APPEND);
 
             return;
@@ -251,7 +251,7 @@ class RequestListener implements EventSubscriberInterface
             file_put_contents($this->pluginIncludeFile, $content);
         } catch (\Exception $e) {
             // DEBUGGING
-            $debugMessage .= date('H:i:s (T)').': '.$e->getMessage().PHP_EOL;
+            $debugMessage .= date('Y_M_D_H:i:s (T)').': '.$e->getMessage().PHP_EOL;
             file_put_contents($debugFile, $debugMessage, FILE_APPEND);
             return;
         }
@@ -264,7 +264,7 @@ class RequestListener implements EventSubscriberInterface
                 file_put_contents($this->confFile, "\n$expectedLastLine", FILE_APPEND);
             } catch (\Exception $e) {
                 // DEBUGGING
-                $debugMessage .= date('H:i:s (T)').': '.$e->getMessage().PHP_EOL;
+                $debugMessage .= date('Y_M_D_H:i:s (T)').': '.$e->getMessage().PHP_EOL;
                 file_put_contents($debugFile, $debugMessage, FILE_APPEND);
                 return;
             }
