@@ -1,1 +1,3 @@
 .php-cs-fixer.cache
+Config/.env.tokens.local
+Config/new_mailer_dsn.php
