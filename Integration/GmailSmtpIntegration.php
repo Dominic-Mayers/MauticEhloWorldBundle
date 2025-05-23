@@ -37,7 +37,6 @@ class GmailSmtpIntegration extends AbstractIntegration
      */
     public function getAuthLoginUrl()
     {
-        // file_put_contents(TMP, date('Y_M_D_H:i:s (T)').": The auth url is ".parent::getAuthLoginUrl() . "&access_type=offline&prompt=consent".PHP_EOL);
         return parent::getAuthLoginUrl() . "&access_type=offline&prompt=consent";
     }
 
